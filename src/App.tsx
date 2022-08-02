@@ -1,34 +1,105 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import './App.css'
+import { useEffect, useState } from "react";
 
-function App() {
-  const [count, setCount] = useState(0)
+type Todos = {
+  id: number;
+  text: string;
+};
+
+// const TODOS = [
+//   {
+//     id: 0,
+//     text: "買い物に行く",
+//   },
+//   {
+//     id: 1,
+//     text: "街に出かける",
+//   },
+//   {
+//     id: 2,
+//     text: "散歩に出かける",
+//   },
+// ];
+
+export const App = (): JSX.Element => {
+  const [text, setText] = useState<string>("");
+  const [todos, setTodos] = useState<Todos[]>([]);
+  const [fetchTodos, setFetchTodos] = useState<string[]>([]);
+
+  useEffect((): void => {
+    const fetchData = async (): Promise<void> => {
+      await fetch("http://127.0.0.1:5173/src/todos.json")
+        .then((res: Response): Promise<any> => {
+          return res.json();
+        })
+        .then((data): void => setFetchTodos(data));
+    };
+    fetchData();
+  }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    setText(e.target.value);
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+    e.preventDefault();
+    if (!text) return;
+    const newTodos: Todos = {
+      id: todos.length,
+      text: text,
+    };
+    setTodos([newTodos, ...todos]);
+    setText("");
+  };
+
+  const handleEditChange = (id: number, text: string): void => {
+    const editTodos: Todos[] = todos.map((todo: Todos): Todos => {
+      if (todo.id === id) {
+        todo.text = text;
+      }
+      return todo;
+    });
+    setTodos(editTodos);
+  };
+
+  const handleDelete = (id: number): void => {
+    const deleteTodos: Todos[] = todos.filter(
+      (todo: Todos): boolean => todo.id !== id
+    );
+    setTodos(deleteTodos);
+  };
 
   return (
-    <div className="App">
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </div>
-  )
-}
+    <>
+      <h2>Todoリスト</h2>
+      <form onSubmit={handleSubmit}>
+        <input type="text" value={text} onChange={handleInputChange} />
+        <input type="submit" value="追加" />
+      </form>
 
-export default App
+      <ul>
+        {fetchTodos.map(
+          (todo: any, i: number): JSX.Element => (
+            <li key={i}>{todo.text}</li>
+          )
+        )}
+      </ul>
+
+      <ul>
+        {todos.map(
+          (todo: Todos): JSX.Element => (
+            <li key={todo.id}>
+              <input
+                type="text"
+                value={todo.text}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  handleEditChange(todo.id, e.target.value)
+                }
+              />
+              <button onClick={(): void => handleDelete(todo.id)}>削除</button>
+            </li>
+          )
+        )}
+      </ul>
+    </>
+  );
+};
