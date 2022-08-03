@@ -3,22 +3,8 @@ import { useEffect, useState } from "react";
 type Todos = {
   id: number;
   text: string;
+  completed: boolean;
 };
-
-// const TODOS = [
-//   {
-//     id: 0,
-//     text: "買い物に行く",
-//   },
-//   {
-//     id: 1,
-//     text: "街に出かける",
-//   },
-//   {
-//     id: 2,
-//     text: "散歩に出かける",
-//   },
-// ];
 
 export const App = (): JSX.Element => {
   const [text, setText] = useState<string>("");
@@ -46,6 +32,7 @@ export const App = (): JSX.Element => {
     const newTodos: Todos = {
       id: todos.length,
       text: text,
+      completed: false,
     };
     setTodos([newTodos, ...todos]);
     setText("");
@@ -61,11 +48,28 @@ export const App = (): JSX.Element => {
     setTodos(editTodos);
   };
 
+  const handleCompleted = (id: number, completed: boolean): void => {
+    const completedTodos: Todos[] = todos.map((todo: Todos): Todos => {
+      if (todo.id === id) {
+        todo.completed = !completed;
+      }
+      return todo;
+    });
+    setTodos(completedTodos);
+  };
+
   const handleDelete = (id: number): void => {
     const deleteTodos: Todos[] = todos.filter(
       (todo: Todos): boolean => todo.id !== id
     );
     setTodos(deleteTodos);
+  };
+
+  const handleDeleteAllCompleted = (): void => {
+    const deleteAllCompleted: Todos[] = todos.filter(
+      (todo: Todos): boolean => todo.completed === false
+    );
+    setTodos(deleteAllCompleted);
   };
 
   return (
@@ -79,7 +83,10 @@ export const App = (): JSX.Element => {
       <ul>
         {fetchTodos.map(
           (todo: any, i: number): JSX.Element => (
-            <li key={i}>{todo.text}</li>
+            <li key={i}>
+              <input type="checkbox" />
+              <span>{todo.text}</span>
+            </li>
           )
         )}
       </ul>
@@ -89,8 +96,13 @@ export const App = (): JSX.Element => {
           (todo: Todos): JSX.Element => (
             <li key={todo.id}>
               <input
+                type="checkbox"
+                onClick={(): void => handleCompleted(todo.id, todo.completed)}
+              />
+              <input
                 type="text"
                 value={todo.text}
+                disabled={todo.completed}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                   handleEditChange(todo.id, e.target.value)
                 }
@@ -100,6 +112,9 @@ export const App = (): JSX.Element => {
           )
         )}
       </ul>
+      <button onClick={handleDeleteAllCompleted}>
+        完了済みのTodoを全て削除
+      </button>
     </>
   );
 };
