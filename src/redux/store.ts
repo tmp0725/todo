@@ -1,4 +1,10 @@
-import { combineReducers, compose, legacy_createStore } from "@reduxjs/toolkit";
+import {
+  applyMiddleware,
+  combineReducers,
+  compose,
+  legacy_createStore,
+} from "@reduxjs/toolkit";
+import thunk from "redux-thunk";
 import { todosReducer } from "./reducer";
 
 interface ExtendedWindow extends Window {
@@ -12,9 +18,11 @@ const composeReduxDevToolsEnhancers =
 
 export type TodosState = ReturnType<typeof store.getState>;
 
+const middlewares = [thunk];
+
 export const store = legacy_createStore(
   combineReducers({
     todos: todosReducer,
   }),
-  composeReduxDevToolsEnhancers()
+  composeReduxDevToolsEnhancers(applyMiddleware(...middlewares))
 );

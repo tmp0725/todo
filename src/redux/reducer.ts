@@ -1,19 +1,49 @@
 import { Reducer } from "redux";
 import {
-  addTodo,
+  GET_TODOS_REQUEST,
+  getTodosRequest,
+  GET_TODOS_SUCCESS,
+  getTodosSuccess,
+  GET_TODOS_FAILURE,
+  getTodosFailure,
   ADD_TODO,
-  deleteTodo,
+  addTodo,
+  TODO_COMPLETED_CHANGE,
+  todoCompletedChange,
   DELETE_TODO,
-  GET_TITLE,
-  getTitle,
+  deleteTodo,
+  PRIORITY_CHANGE,
+  priorityChange,
+  DELETE_ALL_TODOS_COMPLETED,
+  deleteAllTodosCompleted,
 } from "./action";
 import { Todos } from "../types/type";
 import { currentTime } from "../Date/date";
 
-type Action = ReturnType<typeof addTodo | typeof deleteTodo | typeof getTitle>;
+type Actions = ReturnType<
+  | typeof getTodosRequest
+  | typeof getTodosSuccess
+  | typeof getTodosFailure
+  | typeof addTodo
+  | typeof deleteTodo
+  | typeof todoCompletedChange
+  | typeof deleteAllTodosCompleted
+>;
 
-export const todosReducer: Reducer<Todos[], Action> = (state = [], action) => {
+export const todosReducer: Reducer<Todos[], Actions> = (state = [], action) => {
   switch (action.type) {
+    case GET_TODOS_REQUEST: {
+      return action.payload.url;
+    }
+
+    case GET_TODOS_SUCCESS: {
+      return action.response;
+    }
+
+    case GET_TODOS_FAILURE: {
+      return action.payload.error;
+    }
+
     case ADD_TODO: {
       const newTodos = {
         id: state.length,
@@ -28,16 +58,35 @@ export const todosReducer: Reducer<Todos[], Action> = (state = [], action) => {
     }
 
     case DELETE_TODO: {
-      const deleteTodo = state.filter((todo) => todo.id !== action.payload.id);
-      return deleteTodo;
+      return state.filter((todo) => todo.id !== action.payload.id);
     }
 
-    case GET_TITLE: {
-      const getTitle = state.filter((todo) => todo.title === action.title);
-      return getTitle;
+    case TODO_COMPLETED_CHANGE: {
+      const todoCompletedChange: any = state.map((todo: Todos) => {
+        if (todo.id === action.payload.id) {
+          todo.completed = !action.payload.completed;
+        }
+      });
+      return [...state, todoCompletedChange];
     }
+
+    case DELETE_ALL_TODOS_COMPLETED: {
+      return state.filter((todo: Todos): boolean => todo.completed === false);
+    }
+
     default: {
       return state;
     }
   }
 };
+
+// case PRIORITY_CHANGE: {
+//   const priorityChange = state.map((todo) => todo);
+//   priorityChange.sort((desc: any, asce: any) => {
+//     if (desc.priority > asce.priority) {
+//       return 1;
+//     } else {
+//       return -1;
+//     }
+//   });
+// }

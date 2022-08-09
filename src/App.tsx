@@ -1,9 +1,19 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import { addTodo, deleteTodo, getTitle } from "./redux/action";
+import {
+  getTodosRequest,
+  getTodosSuccess,
+  getTodosFailure,
+  addTodo,
+  deleteTodo,
+  todoCompletedChange,
+  priorityChange,
+  deleteAllTodosCompleted,
+  getTodos,
+} from "./redux/action";
 import { TodosState } from "./redux/store";
-import { Todo, Todos } from "./types/type";
+import { Todo } from "./types/type";
 
 export const App = (): JSX.Element => {
   const dispatch = useDispatch();
@@ -15,20 +25,20 @@ export const App = (): JSX.Element => {
     priority: "",
     closingDate: "",
   });
-  const [todos, setTodos] = useState<Todos[]>([]);
-  const [fetchTodos, setFetchTodos] = useState<string[]>([]);
 
-  console.log(selector.map((todo) => todo));
+  useEffect(() => {
+    getTodos();
 
-  useEffect((): void => {
-    const fetchData = async (): Promise<void> => {
-      await fetch("http://127.0.0.1:5173/src/todos.json")
-        .then((res: Response): Promise<any> => {
-          return res.json();
-        })
-        .then((data): void => setFetchTodos(data));
-    };
-    fetchData();
+    // const getTodosAction = () => {
+    //   return (dispatch: any) => {
+    //     dispatch(getTodosRequest());
+    //     return axios
+    //       .get(`http://127.0.0.1:5173/src/todos.json`)
+    //       .then((res) => dispatch(getTodosSuccess(res.data)))
+    //       .catch((err) => dispatch(getTodosFailure(err)));
+    //   };
+    // };
+    // getTodosAction();
   }, []);
 
   const handleTitleChange = (e: any) => {
@@ -61,23 +71,6 @@ export const App = (): JSX.Element => {
     setTodo({ ...todo, title: "", text: "" });
   };
 
-  const handleCompleted = (id: number, completed: boolean) => {
-    const completedTodos = todos.map((todo: Todos) => {
-      if (todo.id === id) {
-        todo.completed = !completed;
-      }
-      return todo;
-    });
-    setTodos(completedTodos);
-  };
-
-  // const handleDeleteAllCompleted = () => {
-  //   const deleteAllCompleted = todos.filter(
-  //     (todo: Todos): boolean => todo.completed === false
-  //   );
-  //   setTodos(deleteAllCompleted);
-  // };
-
   return (
     <>
       <h2>Todoリスト</h2>
@@ -96,17 +89,23 @@ export const App = (): JSX.Element => {
             value={todo.text}
             onChange={handleTextChange}
           ></textarea>
-          <select onChange={handleSelectChange}>
-            <option value="">優先度</option>
-            <option value="高">高</option>
-            <option value="中">中</option>
-            <option value="低">低</option>
-          </select>
-          <input type="date" onChange={handleDateChange}></input>
+          <span>
+            <span>優先度:</span>
+            <select onChange={handleSelectChange}>
+              <option value=""></option>
+              <option value="高">高</option>
+              <option value="中">中</option>
+              <option value="低">低</option>
+            </select>
+          </span>
+          <span>
+            <span>締切日:</span>
+            <input type="date" onChange={handleDateChange}></input>
+          </span>
           <input type="submit" value="追加" />
         </div>
       </form>
-      <ul>
+      {/* <ul>
         {fetchTodos.map(
           (todo: any, i: number): JSX.Element => (
             <li key={i}>
@@ -115,24 +114,28 @@ export const App = (): JSX.Element => {
             </li>
           )
         )}
-      </ul>
+      </ul> */}
       <span>
-        <button>優先度</button>
+        <button onClick={() => dispatch(priorityChange(todo.priority))}>
+          優先度
+        </button>
         <button>作成日</button>
         <button>締切日</button>
       </span>
+      <h3>未完了のTodoリスト</h3>
       <ul>
-        {selector.map(
-          (todo): JSX.Element => (
+        {selector
+          .filter((todo) => todo.completed === false)
+          .map((todo) => (
             <li key={todo.id}>
               <input
                 type="checkbox"
-                onClick={(): void => handleCompleted(todo.id, todo.completed)}
+                onClick={() =>
+                  dispatch(todoCompletedChange(todo.id, todo.completed))
+                }
               />
               <Link to="/todo-detail">
-                <span onClick={() => dispatch(getTitle(todo.title))}>
-                  {todo.title}
-                </span>
+                <span>{todo.title}</span>
               </Link>
               <span> {todo.text}</span>
               <p></p>
@@ -144,33 +147,20 @@ export const App = (): JSX.Element => {
               </button>
               <p></p>
             </li>
-          )
-        )}
+          ))}
       </ul>
-      {/* <button onClick={handleDeleteAllCompleted}>
+      <h3>完了したTodoリスト</h3>
+      {selector
+        .filter((todo) => todo.completed === true)
+        .map((todo) => (
+          <div key={todo.id}>
+            <span>{todo.title}</span>
+            <span> {todo.text}</span>
+          </div>
+        ))}
+      <button onClick={() => dispatch(deleteAllTodosCompleted())}>
         完了済みのTodoを全て削除
-      </button> */}
+      </button>
     </>
   );
 };
-
-// const handleEditChange = (id: number, text: string) => {
-//   const editTodos = todos.map((todo: Todos) => {
-//     if (todo.id === id) {
-//       todo.text = text;
-//     }
-//     return todo;
-//   });
-//   setTodos(editTodos);
-// };
-
-//       <input
-//         type="checkbox"
-//         onClick={(): void => handleCompleted(todo.id, todo.completed)}
-//       />
-//       <input
-//         type="text"
-//         value={todo.text}
-//         disabled={todo.completed}
-//         onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-//           handleEditChange(todo.id, e.target.value)
